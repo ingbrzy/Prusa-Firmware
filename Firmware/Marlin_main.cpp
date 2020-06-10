@@ -6295,12 +6295,22 @@ Sigma_Exit:
             float print_time_to_change_silent_f = code_value_float();
             print_time_to_change_silent = ( print_time_to_change_silent_f <= 0 ) ? PRINT_TIME_REMAINING_INIT : print_time_to_change_silent_f;
         }
-        {
-            const char* _msg_mode_done_remain = _N("%S MODE: Percent done: %hhd; print time remaining in mins: %d; Change in mins: %d\n");
-            printf_P(_msg_mode_done_remain, _N("NORMAL"), int8_t(print_percent_done_normal), print_time_remaining_normal, print_time_to_change_normal);
-            printf_P(_msg_mode_done_remain, _N("SILENT"), int8_t(print_percent_done_silent), print_time_remaining_silent, print_time_to_change_silent);
-        }
-        break;
+		{
+			const char* _msg_mode_done_remain = _N("%S MODE: Percent done: %d; print time remaining in mins: %d\n");
+#ifdef TMC2130
+			if(tmc2130_mode==TMC2130_MODE_NORMAL) 
+			{
+#endif
+				printf_P(_msg_mode_done_remain, _N("NORMAL"), int(print_percent_done_normal), print_time_remaining_normal);
+#ifdef TMC2130
+			}
+			if(tmc2130_mode==TMC2130_MODE_SILENT) 
+			{
+				printf_P(_msg_mode_done_remain, _N("SILENT"), int(print_percent_done_silent), print_time_remaining_silent);
+			}
+#endif
+		}
+		break;
     }
     /*!
 	### M104 - Set hotend temperature <a href="https://reprap.org/wiki/G-code#M104:_Set_Extruder_Temperature">M104: Set Extruder Temperature</a>
