@@ -3916,30 +3916,38 @@ static uint8_t get_PRUSA_SN(char* SN)
     ShortTimer timeout;
 
     selectedSerialPort = 0;
-    timeout.start();
+    static const long baudrates[] PROGMEM = {BAUDRATE, 9600};
     
-    while (!SN_valid)
-    {
-        rxIndex = 0;
+    for (uint8_t i = 0; i < (sizeof(baudrates) / sizeof(baudrates[0])); i++) {
+        MYSERIAL.begin(pgm_read_dword(&baudrates[i]));
         _delay(50);
-        MYSERIAL.flush(); //clear RX buffer
-        SERIAL_ECHOLNRPGM(PSTR(";S"));
-        while (rxIndex < 19)
-        {
-            if (timeout.expired(250u))
+        timeout.start();
+        for(;;) {
+            rxIndex = 0;
+            _delay(50);
+            MYSERIAL.flush(); //clear RX buffer
+            SERIAL_ECHOLNRPGM(PSTR(";S"));
+            while (rxIndex < 19) {
+                if (timeout.expired(250u)) {
+                    goto baud_end;
+                }
+                if (MYSERIAL.available() > 0) {
+                    SN[rxIndex] = MYSERIAL.read();
+                    rxIndex++;
+                }
+            }
+            SN[rxIndex] = 0;
+            // printf_P(PSTR("SN:%s\n"), SN);
+            SN_valid = (strncmp_P(SN, PSTR("CZPX"), 4) == 0);
+            if (SN_valid) {
                 goto exit;
-            if (MYSERIAL.available() > 0)
-            {
-                SN[rxIndex] = MYSERIAL.read();
-                rxIndex++;
             }
         }
-        SN[rxIndex] = 0;
-        // printf_P(PSTR("SN:%s\n"), SN);
-        SN_valid = (strncmp_P(SN, PSTR("CZPX"), 4) == 0);
+baud_end:;
     }
 exit:
     selectedSerialPort = selectedSerialPort_bak;
+    MYSERIAL.begin(BAUDRATE);
     return !SN_valid;
 }
 //! Detection of faulty RAMBo 1.1b boards equipped with bigger capacitors
