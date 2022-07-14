@@ -16,7 +16,7 @@
 //-//
 #include "sound.h"
 
-#define LCD_DEFAULT_DELAY 100
+#define LCD_DEFAULT_DELAY 40
 
 #if (defined(LCD_PINS_D0) && defined(LCD_PINS_D1) && defined(LCD_PINS_D2) && defined(LCD_PINS_D3))
 	#define LCD_8BIT
