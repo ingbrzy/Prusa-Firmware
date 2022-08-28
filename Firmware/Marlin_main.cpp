@@ -6283,35 +6283,63 @@ Sigma_Exit:
     */
     case 73: //M73 show percent done, time remaining and time to change/pause
     {
-        if(code_seen('P')) print_percent_done_normal = code_value_uint8();
-        if(code_seen('R')) print_time_remaining_normal = code_value();
-        if(code_seen('Q')) print_percent_done_silent = code_value_uint8();
-        if(code_seen('S')) print_time_remaining_silent = code_value();
-        if(code_seen('C')){
+        bool print_normal = false;
+        bool print_silent = false;
+        if(code_seen('P')) {
+            print_percent_done_normal = code_value_uint8();
+            print_normal = true;
+        }
+        if(code_seen('R')) {
+            print_time_remaining_normal = code_value();
+            print_normal = true;
+        }
+        if(code_seen('Q')) {
+            print_percent_done_silent = code_value_uint8();
+            print_silent = true;
+        }
+        if(code_seen('S')) {
+            print_time_remaining_silent = code_value();
+            print_silent = true;
+        }
+        if(code_seen('C')) {
             float print_time_to_change_normal_f = code_value_float();
             print_time_to_change_normal = ( print_time_to_change_normal_f <= 0 ) ? PRINT_TIME_REMAINING_INIT : print_time_to_change_normal_f;
+            print_normal = true;
         }
-        if(code_seen('D')){
+        if(code_seen('D')) {
             float print_time_to_change_silent_f = code_value_float();
             print_time_to_change_silent = ( print_time_to_change_silent_f <= 0 ) ? PRINT_TIME_REMAINING_INIT : print_time_to_change_silent_f;
+            print_silent = true;
         }
-		{
-			const char* _msg_mode_done_remain = _N("%S MODE: Percent done: %d; print time remaining in mins: %d\n");
+
+        const char* _msg_mode_done_remain = PSTR("%S MODE: Percent done: %d; print time remaining in mins: %d; Change in mins: %d; active: %d\n");
+        if (print_normal) {
+            printf_P(_msg_mode_done_remain,
+                PSTR("NORMAL"),
+                print_percent_done_normal,
+                print_time_remaining_normal,
+                print_time_to_change_normal,
 #ifdef TMC2130
-			if(tmc2130_mode==TMC2130_MODE_NORMAL) 
-			{
-#endif
-				printf_P(_msg_mode_done_remain, _N("NORMAL"), int(print_percent_done_normal), print_time_remaining_normal);
+                tmc2130_mode == TMC2130_MODE_NORMAL
+#else //TMC2130
+                1
+#endif //TMC2130
+            );
+        }
+        if (print_silent) {
+            printf_P(_msg_mode_done_remain,
+                PSTR("SILENT"),
+                print_percent_done_silent,
+                print_time_remaining_silent,
+                print_time_to_change_silent,
 #ifdef TMC2130
-			}
-			if(tmc2130_mode==TMC2130_MODE_SILENT) 
-			{
-				printf_P(_msg_mode_done_remain, _N("SILENT"), int(print_percent_done_silent), print_time_remaining_silent);
-			}
-#endif
-		}
-		break;
-    }
+                tmc2130_mode == TMC2130_MODE_SILENT
+#else //TMC2130
+                0
+#endif //TMC2130
+            );
+        }
+    } break;
     /*!
 	### M104 - Set hotend temperature <a href="https://reprap.org/wiki/G-code#M104:_Set_Extruder_Temperature">M104: Set Extruder Temperature</a>
 	#### Usage
