@@ -114,10 +114,10 @@ def wrap_text(text, cols):
     return ret
 
 def ign_char_first(c):
-    return c.isalnum() or c in {'%', '?'}
+    return c.isalnum() or c in ['%', '?'] or c in [chr(c) for c in range(0x80, 0xE0)]
 
 def ign_char_last(c):
-    return c.isalnum() or c in {'.', "'"}
+    return c.isalnum() or c in ['.', '\''] or c in [chr(c) for c in range(0x80, 0xE0)]
 
 def check_translation(entry, msgids, is_pot, no_warning, no_suggest, warn_empty, warn_same, information, shorter):
     """Check strings to display definition."""
