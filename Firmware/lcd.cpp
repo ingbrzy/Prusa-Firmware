@@ -376,13 +376,26 @@ void lcd_set_cursor_column(uint8_t col)
 
 // Allows us to fill the first 8 CGRAM locations
 // with custom characters
-void lcd_createChar_P(uint8_t location, const uint8_t* charmap)
+void lcd_createChar_P(uint8_t location, const CustomCharacter* char_p)
 {
-  location &= 0x7; // we only have 8 locations 0-7
-  lcd_command(LCD_SETCGRAMADDR | (location << 3));
-  for (uint8_t i = 0; i < 8; i++)
-    lcd_send(pgm_read_byte(&charmap[i]), HIGH);
-  lcd_command(LCD_SETDDRAMADDR | lcd_ddram_address); // no need for masking the address
+	location &= 0x7; // we only have 8 locations 0-7
+	lcd_command(LCD_SETCGRAMADDR | (location << 3));
+
+	uint8_t colData = pgm_read_byte(&char_p->colByte);
+	for (uint8_t i = 0; i < 4; i++) {
+		uint8_t rowData = pgm_read_byte(&char_p->rowData[i]);
+		
+		uint8_t bit5 = colData & 0x01;
+		colData >>= 1;
+		lcd_send((bit5 << 5) | (rowData & 0xF), HIGH);
+		
+		rowData = (rowData << 4) | (rowData >> 4); //swap nibbles
+		bit5 = colData & 0x01;
+		colData >>= 1;
+		lcd_send((bit5 << 5) | (rowData & 0xF), HIGH);
+	}
+
+	lcd_command(LCD_SETDDRAMADDR | lcd_ddram_address); // no need for masking the address
 }
 
 #ifdef VT100
@@ -854,7 +867,7 @@ static void lcd_print_custom(uint8_t c) {
 	// try to find a slot where it could be placed
 	for (uint8_t i = 0; i < 8; i++) {
 		if (lcd_custom_characters[i] == 0x7F) { //found an empty slot. create a new custom character and send it
-			lcd_createChar_P(i, Font[c - 0x80].data);
+			lcd_createChar_P(i, &Font[c - 0x80]);
 			lcd_custom_characters[i] = c; // mark the custom character as used
 #ifdef DEBUG_CUSTOM_CHARACTERS
 			printf_P(PSTR("created char %02x at slot %u\n"), c, i);
